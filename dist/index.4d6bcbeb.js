@@ -560,59 +560,34 @@ function hmrAccept(bundle, id) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 var _app = require("./App");
 var _appDefault = parcelHelpers.interopDefault(_app);
+var _routes = require("./routes");
+var _routesDefault = parcelHelpers.interopDefault(_routes);
 const root = document.querySelector("#root");
 root.append(new (0, _appDefault.default)().el);
+(0, _routesDefault.default)();
 
-},{"./App":"2kQhy","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2kQhy":[function(require,module,exports) {
+},{"./App":"2kQhy","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./routes":"3L9mC"}],"2kQhy":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _core = require("./core/core");
-var _fruitItem = require("./components/FruitItem");
-var _fruitItemDefault = parcelHelpers.interopDefault(_fruitItem);
+var _theHeader = require("./components/TheHeader");
+var _theHeaderDefault = parcelHelpers.interopDefault(_theHeader);
 class App extends (0, _core.Component) {
-    constructor(){
-        super({
-            state: {
-                fruits: [
-                    {
-                        name: "Apple",
-                        price: 1000
-                    },
-                    {
-                        name: "Banana",
-                        price: 2000
-                    },
-                    {
-                        name: "Cherry",
-                        price: 3000
-                    }
-                ]
-            }
-        });
-    }
     render() {
-        console.log(this.state.fruits);
-        this.el.innerHTML = /*html*/ `
-    <h1>Fruits</h1>
-    <ul>
-    </ul>
-    `;
-        const ulEl = this.el.querySelector("ul");
-        ulEl.append(...this.state.fruits.map((fruit)=>new (0, _fruitItemDefault.default)({
-                props: {
-                    name: fruit.name,
-                    price: fruit.price
-                }
-            }).el));
+        const routerView = document.createElement("router-view");
+        this.el.append(new (0, _theHeaderDefault.default)().el, routerView);
     }
 }
 exports.default = App;
 
-},{"./core/core":"3SuZC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./components/FruitItem":"79Im4"}],"3SuZC":[function(require,module,exports) {
+},{"./core/core":"3SuZC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./components/TheHeader":"3Cyq4"}],"3SuZC":[function(require,module,exports) {
 ////// Component //////
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Component", ()=>Component);
+parcelHelpers.export(exports, "createRouter", ()=>createRouter);
+////// Store //////
+parcelHelpers.export(exports, "Store", ()=>Store);
 class Component {
     constructor(payload = {}){
         const { tagName ="div" , state ={} , props ={}  } = payload;
@@ -623,6 +598,52 @@ class Component {
     }
     render() {
     //component를 확장할 때 사용
+    }
+}
+////// Router //////
+function routeRender(routes) {
+    if (!location.hash) history.replaceState(null, "", "/#/"); //history.replaceState : history내역의 기록을 남기지 않으면서 페이지 이동을 해줌
+    const routerView = document.querySelector("router-view");
+    const [hash, queryString = ""] = location.hash.split("?"); //#/about?name=eunji : 물음표를 기준으로 hash와 queryString을 구분해서 배열데이터로 만든다
+    //a=123&b=456
+    //["a=123", "b=456"]
+    //{a: "123", b: "456"}
+    const query = queryString.split("&").reduce((acc, cur)=>{
+        const [key, value] = cur.split("=");
+        acc[key] = value;
+        return acc;
+    }, {});
+    history.replaceState(query, "");
+    //각 페이지 정보 = route
+    const currentRoute = routes.find((route)=>new RegExp(`${route.path}/?$`).test(hash));
+    routerView.innerHTML = "";
+    routerView.append(new currentRoute.component().el);
+    window.scrollTo(0, 0);
+}
+function createRouter(routes) {
+    return function() {
+        window.addEventListener("popstate", ()=>{
+            //popstate: 주소부분이 바뀔때
+            routeRender(routes);
+        });
+        routeRender(routes);
+    };
+}
+class Store {
+    constructor(state){
+        this.state = {};
+        this.observers = {};
+        for(const key in state)//객체에 새로운 속성을 직접 정의하거나 이미 존재하는 속성을 수정한 후, 해당 객체를 반환
+        Object.defineProperty(this.state, key, {
+            get: ()=>state[key],
+            set: (val)=>{
+                state[key] = val; //state의 값을 갱신
+                this.observers[key]();
+            }
+        });
+    }
+    subscribe(key, cb) {
+        this.observers[key] = cb;
     }
 }
 
@@ -656,28 +677,127 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}],"79Im4":[function(require,module,exports) {
+},{}],"3Cyq4":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _core = require("../core/core");
-class FruitItem extends (0, _core.Component) {
-    constructor(payload){
+class TheHeader extends (0, _core.Component) {
+    constructor(){
         super({
-            tagName: "li",
-            props: payload.props
+            tagName: "header"
         });
     }
     render() {
         this.el.innerHTML = /*html */ `
-      <span>${this.props.name}</span>
-      <span>${this.props.price}</span>
+      <a href="#/">Main!</a>
+      <a href="#/about">About!</a>
     `;
-        this.el.addEventListener("click", ()=>{
-            console.log(this.props.name, this.props.price);
+    }
+}
+exports.default = TheHeader;
+
+},{"../core/core":"3SuZC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3L9mC":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _core = require("../core/core");
+var _home = require("./Home");
+var _homeDefault = parcelHelpers.interopDefault(_home);
+var _about = require("./About");
+var _aboutDefault = parcelHelpers.interopDefault(_about);
+//페이지 구분을 위한 createRouter
+exports.default = (0, _core.createRouter)([
+    {
+        path: "#/",
+        component: (0, _homeDefault.default)
+    },
+    {
+        path: "#/about",
+        component: (0, _aboutDefault.default)
+    }
+]);
+
+},{"../core/core":"3SuZC","./Home":"0JSNG","./About":"gdB30","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"0JSNG":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _core = require("../core/core");
+var _textField = require("../components/TextField");
+var _textFieldDefault = parcelHelpers.interopDefault(_textField);
+var _message = require("../components/Message");
+var _messageDefault = parcelHelpers.interopDefault(_message);
+class Home extends (0, _core.Component) {
+    render() {
+        this.el.innerHTML = /* html */ `
+    <h1>Home Page!</h1>
+    `;
+        this.el.append(new (0, _textFieldDefault.default)().el, new (0, _messageDefault.default)().el);
+    }
+}
+exports.default = Home;
+
+},{"../core/core":"3SuZC","../components/TextField":"e6IWT","../components/Message":"i84kQ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"e6IWT":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _core = require("../core/core");
+var _message = require("../store/message");
+var _messageDefault = parcelHelpers.interopDefault(_message);
+class TextField extends (0, _core.Component) {
+    render() {
+        this.el.innerHTML = /*html */ `
+      <input value ="${(0, _messageDefault.default).state.message}" />
+    `;
+        const inputEl = this.el.querySelector("input");
+        inputEl.addEventListener("input", ()=>{
+            (0, _messageDefault.default).state.message = inputEl.value;
         });
     }
 }
-exports.default = FruitItem;
+exports.default = TextField;
+
+},{"../core/core":"3SuZC","../store/message":"4gYOO","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4gYOO":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _core = require("../core/core");
+exports.default = new (0, _core.Store)({
+    message: "Hello~"
+});
+
+},{"../core/core":"3SuZC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"i84kQ":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _core = require("../core/core");
+var _message = require("../store/message");
+var _messageDefault = parcelHelpers.interopDefault(_message);
+class Message extends (0, _core.Component) {
+    constructor(){
+        super();
+        (0, _messageDefault.default).subscribe("message", ()=>{
+            this.render();
+        });
+    }
+    render() {
+        this.el.innerHTML = /*html*/ `
+      <h2>${(0, _messageDefault.default).state.message}</h2>
+    `;
+    }
+}
+exports.default = Message;
+
+},{"../core/core":"3SuZC","../store/message":"4gYOO","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gdB30":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _core = require("../core/core");
+class About extends (0, _core.Component) {
+    render() {
+        const { a , b , c  } = history.state;
+        this.el.innerHTML = /* html */ `
+    <h1>About Page!</h1>
+    <h2>${a}</h2>
+    <h2>${b}</h2>
+    <h2>${c}</h2>
+    `;
+    }
+}
+exports.default = About;
 
 },{"../core/core":"3SuZC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["e11Rl","gLLPy"], "gLLPy", "parcelRequirec45b")
 
