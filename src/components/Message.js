@@ -5,7 +5,7 @@ export default class Message extends Component {
   constructor() {
     super();
     messageStore.subscribe("message", () => {
-      this.render();
+      this.render(); //메세지가 변경될 때마다 콜백함수 실행
     });
   }
   render() {

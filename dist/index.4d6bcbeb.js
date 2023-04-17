@@ -638,12 +638,17 @@ class Store {
             get: ()=>state[key],
             set: (val)=>{
                 state[key] = val; //state의 값을 갱신
-                this.observers[key]();
+                this.observers[key].forEach((observer)=>observer(val));
             }
         });
     }
     subscribe(key, cb) {
-        this.observers[key] = cb;
+        // { message: [cb1, cb2, cb3, ...] }
+        //this.observersp[key]가 배열이면
+        Array.isArray(this.observers[key]) ? this.observers[key].push(cb) //배열이면 콜백함수를 push
+         : this.observers[key] = [
+            cb
+        ]; //배열이 아니면 콜백함수를 배열에 담아 할당한다
     }
 }
 
@@ -724,17 +729,19 @@ var _textField = require("../components/TextField");
 var _textFieldDefault = parcelHelpers.interopDefault(_textField);
 var _message = require("../components/Message");
 var _messageDefault = parcelHelpers.interopDefault(_message);
+var _title = require("../components/Title");
+var _titleDefault = parcelHelpers.interopDefault(_title);
 class Home extends (0, _core.Component) {
     render() {
         this.el.innerHTML = /* html */ `
     <h1>Home Page!</h1>
     `;
-        this.el.append(new (0, _textFieldDefault.default)().el, new (0, _messageDefault.default)().el);
+        this.el.append(new (0, _textFieldDefault.default)().el, new (0, _messageDefault.default)().el, new (0, _titleDefault.default)().el);
     }
 }
 exports.default = Home;
 
-},{"../core/core":"3SuZC","../components/TextField":"e6IWT","../components/Message":"i84kQ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"e6IWT":[function(require,module,exports) {
+},{"../core/core":"3SuZC","../components/TextField":"e6IWT","../components/Message":"i84kQ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","../components/Title":"6wotK"}],"e6IWT":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _core = require("../core/core");
@@ -771,7 +778,7 @@ class Message extends (0, _core.Component) {
     constructor(){
         super();
         (0, _messageDefault.default).subscribe("message", ()=>{
-            this.render();
+            this.render(); //메세지가 변경될 때마다 콜백함수 실행
         });
     }
     render() {
@@ -781,6 +788,28 @@ class Message extends (0, _core.Component) {
     }
 }
 exports.default = Message;
+
+},{"../core/core":"3SuZC","../store/message":"4gYOO","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6wotK":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _core = require("../core/core");
+var _message = require("../store/message");
+var _messageDefault = parcelHelpers.interopDefault(_message);
+class Title extends (0, _core.Component) {
+    constructor(){
+        super({
+            tagName: "h1"
+        });
+        (0, _messageDefault.default).subscribe("message", (newVal)=>{
+            console.log("newVal: ", newVal);
+            this.render(); //메세지가 변경될 때마다 콜백함수 실행
+        });
+    }
+    render() {
+        this.el.textContent = `Title: ${(0, _messageDefault.default).state.message}`;
+    }
+}
+exports.default = Title;
 
 },{"../core/core":"3SuZC","../store/message":"4gYOO","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gdB30":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");

@@ -61,12 +61,16 @@ export class Store {
         get: () => state[key],
         set: (val) => {
           state[key] = val; //state의 값을 갱신
-          this.observers[key]();
+          this.observers[key].forEach((observer) => observer(val));
         },
       });
     }
   }
   subscribe(key, cb) {
-    this.observers[key] = cb;
+    // { message: [cb1, cb2, cb3, ...] }
+    //this.observersp[key]가 배열이면
+    Array.isArray(this.observers[key])
+      ? this.observers[key].push(cb) //배열이면 콜백함수를 push
+      : (this.observers[key] = [cb]); //배열이 아니면 콜백함수를 배열에 담아 할당한다
   }
 }
